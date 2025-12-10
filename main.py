@@ -54,18 +54,29 @@ def main():
     processes.append(p_displayer)
     
     try:
+        # Wait for all processes to finish naturally (when video ends)
         for p in processes:
-            p.join()
+            p.join(timeout=None)  # Wait indefinitely for normal completion
             
     except KeyboardInterrupt:
         print("\nReceived Ctrl+C - terminating system...")
         for p in processes:
-            p.terminate()
-            p.join(timeout=2)
             if p.is_alive():
-                p.kill()
+                p.terminate()
+                p.join(timeout=2)
+                if p.is_alive():
+                    p.kill()
+    finally:
+        # Ensure all processes are terminated
+        for p in processes:
+            if p.is_alive():
+                print(f"Warning: Process {p.name} still alive, forcing termination...")
+                p.terminate()
+                p.join(timeout=1)
+                if p.is_alive():
+                    p.kill()
     
-    print("System finished")
+    print("System finished - all processes terminated")
 
 
 if __name__ == "__main__":

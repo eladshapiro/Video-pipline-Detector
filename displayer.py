@@ -51,9 +51,14 @@ def displayer_process(input_queue, fps=None):
     
     try:
         while True:
+            # Record start time for frame processing
+            frame_start_time = time.time()
+            
             data = input_queue.get()
             
             if data is None:
+                # Video ended - exit gracefully
+                print("Displayer: Video ended, closing display window...")
                 break
             
             frame_num, frame, detections = data
@@ -77,8 +82,13 @@ def displayer_process(input_queue, fps=None):
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
             
-            # Maintain video playback rate
-            time.sleep(frame_time)
+            # Calculate processing time and adjust sleep to maintain correct playback rate
+            processing_time = time.time() - frame_start_time
+            sleep_time = frame_time - processing_time
+            
+            # Only sleep if we have time left (if processing took longer than frame_time, skip sleep)
+            if sleep_time > 0:
+                time.sleep(sleep_time)
             
     except Exception as e:
         print(f"Error in displayer: {e}")
